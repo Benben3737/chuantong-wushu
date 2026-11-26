@@ -290,6 +290,14 @@
       body.editing [contenteditable="true"]:focus{outline:2px solid var(--accent);background:color-mix(in srgb,var(--gold) 12%, transparent)}
       body.editing a{pointer-events:none}
       body.editing .move,body.editing .card,body.editing .mod,body.editing .branch{border-color:color-mix(in srgb,var(--accent) 35%, var(--line))}
+
+      /* ---------- 页面切换：独立页面视图 ---------- */
+      .page{display:none}
+      .page.active{display:block;animation:pageIn .3s ease both}
+      @keyframes pageIn{from{opacity:0}to{opacity:1}}
+      @media (prefers-reduced-motion: reduce){ .page.active{animation:none} }
+      nav.top a.active{background:var(--panel2);color:var(--accent)}
+      nav.top a.cta.active{background:var(--accent);color:var(--accent-ink);box-shadow:inset 0 -3px 0 rgba(255,255,255,.55)}
     </style>
   </head>
   <body>
@@ -314,6 +322,7 @@
     </div>
 
     <div class="wrap" id="top">
+      <div class="page active" data-page="home">
       <header class="hero">
         <div class="rule"></div>
         <h1>化山湖——<span class="thin">身体修习板块</span></h1>
@@ -356,7 +365,9 @@
           </div>
         </div>
       </section>
+      </div>
 
+      <div class="page" data-page="quan-fa">
       <section id="quan-fa">
         <div class="sec-head"><span class="no">01</span><h2>拳法</h2></div>
         <p class="sec-sub">本站的大类之一。拳法之下按拳种展开，每个拳种共用同一套解剖分析框架：动作姿态图示、肌肉角色、关节活动、发力链与针对性训练。</p>
@@ -383,7 +394,9 @@
           </div>
         </div>
       </section>
+      </div>
 
+      <div class="page" data-page="mantis">
       <section id="mantis">
         <div class="sec-head"><span class="no">02</span><h2>螳螂拳</h2></div>
         <a class="back-link" href="#quan-fa">← 返回拳法</a>
@@ -413,7 +426,9 @@
         </div>
 
       </section>
+      </div>
 
+      <div class="page" data-page="babu">
       <section id="babu">
         <div class="sec-head"><span class="no">03</span><h2>八步螳螂拳 · 动作解剖解析</h2></div>
         <a class="back-link" href="#mantis">← 返回螳螂拳</a>
@@ -534,7 +549,9 @@
           <div class="move-grid" id="lessonMoveGrid"></div>
         </div>
       </section>
+      </div>
 
+      <div class="page" data-page="model">
       <section id="model">
         <div class="sec-head"><span class="no">04</span><h2>肌肉图鉴 · 基础模型（工具层）</h2></div>
         <p class="sec-sub">这是本站的基础工具，不是主角：当中立站立的人体模型用——旋转、点选、搜索，查一块肌肉长在哪里、负责什么、起止点与训练方法。看动作解析时遇到不熟悉的肌肉，随时回到这里查。<strong>默认是真 3D 模型</strong>：拖动自由旋转、滚轮（或双指）缩放、点击模型上的肌肉，下方显示详情；下方的视角按钮与角度滑杆同样能转 3D 模型。网络或设备不支持 3D 时，可切到「2D 示意图」（原来的解剖示意画法），功能完全一样。</p>
@@ -585,7 +602,9 @@
 
         <article class="detail" id="detail" aria-live="polite"></article>
       </section>
+      </div>
 
+      <div class="page" data-page="patch">
       <section id="patch">
         <div class="sec-head"><span class="no">05</span><h2>功能补丁 · 路线图</h2></div>
         <p class="sec-sub">架构已经留好位置，后续按需要逐个往里加。以下模块尚未上线，先占位说明方向：</p>
@@ -622,7 +641,9 @@
           </div>
         </div>
       </section>
+      </div>
 
+      <div class="page" data-page="thanks">
       <section id="thanks">
         <div class="sec-head"><span class="no">06</span><h2>致谢</h2></div>
         <p class="sec-sub">这个小站能一点点搭起来，离不开许多人的无私贡献与帮助，在此一一致谢。以下为致谢位，条目文字可直接点击修改，之后把姓名与事迹替换成正式内容即可。</p>
@@ -649,6 +670,7 @@
           </div>
         </div>
       </section>
+      </div>
 
       <footer>
         本站内容为传统武术的解剖学学习参考：3D 模型为 Z-Anatomy 开源解剖模型，2D 姿态图与示意图为示意画法；训练建议为一般性指导，有伤病史时请先咨询医生或康复师，再按计划练习。
@@ -1144,7 +1166,12 @@
     function showMuscleDetail(id){
       selectMuscle(id, false);
       if (state.mode === "3d" && typeof focusMuscle3D === "function") focusMuscle3D(id);
-      document.getElementById("detail").scrollIntoView({behavior:"smooth", block:"start"});
+      var goDetail = function(){
+        var d = document.getElementById("detail");
+        if (d) d.scrollIntoView({behavior:"smooth", block:"start"});
+      };
+      if (typeof navigateToPage === "function" && currentPageName() !== "model") navigateToPage("model", goDetail);
+      else goDetail();
     }
     function renderMoves(list, gridId){
       var grid = document.getElementById(gridId);
@@ -1180,7 +1207,8 @@
           setAngle(mv.view);
           if (mv.muscles.indexOf(state.selected) < 0) { state.selected = mv.muscles[0]; renderDetail(); }
           markSelection();
-          document.getElementById("model").scrollIntoView({behavior:"smooth", block:"start"});
+          if (typeof navigateToPage === "function") navigateToPage("model");
+          else document.getElementById("model").scrollIntoView({behavior:"smooth", block:"start"});
         });
         grid.appendChild(card);
       });
@@ -1534,6 +1562,62 @@
     renderMoves(LESSON_MOVES.filter(function(mv){ return mv.name.indexOf("剑法") !== 0; }), "lessonMoveGrid");
     sync3DLabels();
     init3D();
+    </script>
+
+    <script>
+    /* ============ 页面切换：独立页面视图 + 哈希路由 ============ */
+    var PAGE_BY_HASH = {"":"home","top":"home","home":"home","quan-fa":"quan-fa","mantis":"mantis","babu":"babu","model":"model","patch":"patch","thanks":"thanks"};
+    var SUB_HASH = {"lesson1":"babu","detail":"model"};
+    var HASH_FOR_PAGE = {"home":"top","quan-fa":"quan-fa","mantis":"mantis","babu":"babu","model":"model","patch":"patch","thanks":"thanks"};
+    var NAV_FOR_PAGE = {"home":"#top","quan-fa":"#quan-fa","mantis":"#quan-fa","babu":"#quan-fa","model":"#model","patch":"#patch","thanks":"#thanks"};
+    var currentPage = null;
+    var pendingAfterNav = null;
+    function currentPageName(){ return currentPage; }
+    function scrollTopInstant(){
+      var de = document.documentElement;
+      var prev = de.style.scrollBehavior;
+      de.style.scrollBehavior = "auto";
+      window.scrollTo(0, 0);
+      de.style.scrollBehavior = prev;
+    }
+    function showPage(page, targetId){
+      if (!page) page = "home";
+      currentPage = page;
+      document.querySelectorAll(".page").forEach(function(pg){
+        pg.classList.toggle("active", pg.getAttribute("data-page") === page);
+      });
+      document.querySelectorAll("nav.top a").forEach(function(a){
+        a.classList.toggle("active", a.getAttribute("href") === NAV_FOR_PAGE[page]);
+      });
+      if (page === "model" && typeof onResize3D === "function") setTimeout(onResize3D, 40);
+      if (targetId){
+        var t = document.getElementById(targetId);
+        if (t){ setTimeout(function(){ t.scrollIntoView({block:"start"}); }, 30); return; }
+      }
+      scrollTopInstant();
+    }
+    function routeFromHash(){
+      var h = (location.hash || "").replace(/^#\/?/, "");
+      var page = PAGE_BY_HASH[h];
+      var targetId = null;
+      if (!page && SUB_HASH[h]){ page = SUB_HASH[h]; targetId = h; }
+      if (!page && h){
+        var el = document.getElementById(h);
+        var holder = el && el.closest ? el.closest(".page") : null;
+        if (holder){ page = holder.getAttribute("data-page"); targetId = h; }
+      }
+      if (!page) page = "home";
+      showPage(page, targetId);
+      if (pendingAfterNav){ var cb = pendingAfterNav; pendingAfterNav = null; setTimeout(cb, 60); }
+    }
+    function navigateToPage(page, after){
+      pendingAfterNav = after || null;
+      var target = "#" + (HASH_FOR_PAGE[page] || page);
+      if (location.hash === target) routeFromHash();
+      else location.hash = target;
+    }
+    window.addEventListener("hashchange", routeFromHash);
+    routeFromHash();
     </script>
 
     <script id="editorScript">
